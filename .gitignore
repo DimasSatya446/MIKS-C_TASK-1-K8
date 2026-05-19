@@ -1,0 +1,23 @@
+﻿# Runtime / generated files
+runtime/
+*.log
+*.tmp
+
+# Docker / local data
+data/
+volumes/
+certs/
+*.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Secrets / credentials
+.env
+*.key
+*.pem
+*.crt
+passwords.txt
+credentials.txt

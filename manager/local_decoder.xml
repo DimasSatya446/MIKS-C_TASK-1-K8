@@ -1,0 +1,5 @@
+<!-- Decoder aman untuk JSON log lab. Jangan gunakan anchor/escape kompleks agar kompatibel dengan regex Wazuh. -->
+<decoder name="wazuh-lab-json">
+  <prematch>lab_type</prematch>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
