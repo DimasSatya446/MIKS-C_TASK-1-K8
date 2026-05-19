@@ -506,97 +506,30 @@ ddos
 
 ---
 
-## 18. Screenshot yang Perlu Diambil untuk Laporan
-
-Ambil screenshot berikut:
-
+## 18. Screenshot
 ### 1. Container Running
+<img width="2471" height="378" alt="image" src="https://github.com/user-attachments/assets/f48cd252-afee-421e-b351-493a32e40af3" />
 
-```powershell
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
-
-Bukti:
-
-```text
-Manager, Dashboard, Indexer, 3 Agent, Web Target, dan Attacker berjalan.
-```
 
 ### 2. Agent Active
+<img width="1110" height="368" alt="image" src="https://github.com/user-attachments/assets/3eb5654a-ce34-456f-9d32-ed74f466c98e" />
 
-```powershell
-docker exec wazuhlab-wazuh.manager-1 /var/ossec/bin/agent_control -l
-```
-
-Bukti:
-
-```text
-wazuh-agent-1-web Active
-wazuh-agent-2-traffic Active
-wazuh-agent-3-malware Active
-```
 
 ### 3. Web Target Diserang
-
-```powershell
-docker logs web-target --since 2m --tail 50
-```
-
-Bukti:
-
-```text
-Banyak request GET / HTTP/1.1 masuk ke Nginx.
-```
+<img width="2032" height="379" alt="image" src="https://github.com/user-attachments/assets/18d9d4ce-3436-44eb-b724-6047d7d64f16" />
 
 ### 4. Alert DDoS
-
-```powershell
-docker exec wazuhlab-wazuh.manager-1 sh -c "grep -E '100100|100103' /var/ossec/logs/alerts/alerts.json | tail -n 10"
-```
-
-Bukti:
-
-```text
-DDoS telemetry dan density/distribution alert muncul.
-```
+<img width="2499" height="386" alt="image" src="https://github.com/user-attachments/assets/8a6d7523-e4de-4d7b-8539-5e68c62c01bb" />
 
 ### 5. Alert Web DDoS
-
-```powershell
-docker exec wazuhlab-wazuh.manager-1 sh -c "grep -E '100301|100302' /var/ossec/logs/alerts/alerts.json | tail -n 10"
-```
-
-Bukti:
-
-```text
-Alert web DDoS muncul.
-```
+<img width="2517" height="435" alt="image" src="https://github.com/user-attachments/assets/dd92e02d-ead5-4e9e-b80a-855c15e55cf6" />
 
 ### 6. Alert Malware
-
-```powershell
-docker exec wazuhlab-wazuh.manager-1 sh -c "grep -E '100200|100201' /var/ossec/logs/alerts/alerts.json | tail -n 10"
-```
-
-Bukti:
-
-```text
-Malware validation alert muncul.
-```
+<img width="2479" height="359" alt="image" src="https://github.com/user-attachments/assets/0543deed-df11-43a9-aba1-a7b492c06846" />
 
 ### 7. Dashboard Wazuh
+<img width="2999" height="1662" alt="image" src="https://github.com/user-attachments/assets/53e6635e-14f9-4684-a9e7-f9ae6ddebf04" />
 
-```text
-https://localhost
-```
-
-Bukti:
-
-```text
-Security events / Threat Hunting menampilkan alert SIEM.
-```
-
----
 
 ## 19. Penjelasan Sederhana Cara Kerja Alert
 
