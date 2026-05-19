@@ -98,21 +98,7 @@ wazuh-azure-ddos-malware-lab.zip
 
 ---
 
-## 5. Ekstrak Project
-
-Ekstrak ZIP ke folder misalnya:
-
-```text
-C:\Users\Dimas Satya Andhika\Downloads\wazuh-docker-final-lab
-```
-
-Masuk ke folder project:
-
-```powershell
-cd "C:\Users\Dimas Satya Andhika\Downloads\wazuh-docker-final-lab\wazuh-docker-final-lab"
-```
-
-Cek isi folder:
+Pastikan isi folder dengan:
 
 ```powershell
 dir
