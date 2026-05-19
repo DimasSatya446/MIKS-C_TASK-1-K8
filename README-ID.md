@@ -81,23 +81,6 @@ OSType: linux
 
 ## 4. File yang Digunakan
 
-Gunakan hanya paket final:
-
-```text
-wazuh-docker-final-lab.zip
-```
-
-Tidak perlu menggunakan paket lama:
-
-```text
-wazuh-windows-docker-lab.zip
-wazuh-web-target-ddos-addon.zip
-wazuh-defensive-lab.zip
-wazuh-azure-ddos-malware-lab.zip
-```
-
----
-
 Pastikan isi folder dengan:
 
 ```powershell
