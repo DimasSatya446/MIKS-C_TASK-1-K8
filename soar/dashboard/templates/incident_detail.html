@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+    </a>
+    <div class="d-flex gap-2">
+        <form action="{{ url_for('trigger_playbook', id=incident.uuid) }}" method="POST">
+            <button type="submit" class="btn btn-warning btn-sm fw-bold">
+                <i class="fa-solid fa-arrows-rotate me-1"></i> Re-Trigger Playbook
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white fw-bold">
+                <i class="fa-solid fa-circle-info me-1"></i> Incident Information
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Rule ID</label>
+                        <span class="badge bg-dark font-monospace fs-6">{{ incident.rule_id }}</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Status</label>
+                        {% if incident.status == 'responded' %}
+                            <span class="badge bg-success fs-6"><i class="fa-solid fa-circle-check"></i> Responded</span>
+                        {% elif incident.status == 'detected' %}
+                            <span class="badge bg-warning text-dark fs-6"><i class="fa-solid fa-spinner fa-spin"></i> Processing</span>
+                        {% else %}
+                            <span class="badge bg-danger fs-6"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="text-muted small d-block">Description</label>
+                        <strong class="text-dark fs-5">{{ incident.rule_description }}</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Triggered Time</label>
+                        <span class="text-secondary small">{{ incident.timestamp }}</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Agent Info</label>
+                        <span class="badge bg-light text-dark border"><i class="fa-solid fa-desktop text-secondary"></i> {{ incident.agent }}</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Source IP (Attacker)</label>
+                        <span class="font-monospace text-danger bg-light p-1 rounded border">{{ incident.srcip or 'N/A' }}</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">Severity Level</label>
+                        {% if incident.severity|int >= 12 %}
+                            <span class="badge bg-danger">Critical ({{ incident.severity }})</span>
+                        {% elif incident.severity|int >= 7 %}
+                            <span class="badge bg-warning text-dark">High ({{ incident.severity }})</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Low ({{ incident.severity }})</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white fw-bold">
+                <i class="fa-solid fa-terminal me-1"></i> SOAR Automated Response Log
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small">
+                            <tr>
+                                <th class="ps-3" style="width: 30%">Action</th>
+                                <th style="width: 40%">Target</th>
+                                <th class="pe-3" style="width: 30%">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if incident.actions_taken_parsed %}
+                                {% for action in incident.actions_taken_parsed %}
+                                    <tr>
+                                        <td class="ps-3 fw-bold font-monospace text-secondary small">
+                                            <i class="fa-solid fa-play text-success small me-1"></i> {{ action.action }}
+                                        </td>
+                                        <td class="font-monospace small text-dark">{{ action.target or 'N/A' }}</td>
+                                        <td class="pe-3">
+                                            {% if action.status == 'success' %}
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                                    <i class="fa-solid fa-check-double me-1"></i> Success
+                                                    {% if action.simulated %}(Simulated){% endif %}
+                                                </span>
+                                            {% elif action.status == 'skipped' %}
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">
+                                                    <i class="fa-solid fa-forward me-1"></i> Skipped: {{ action.reason }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill d-inline-block text-truncate" style="max-width: 150px;" title="{{ action.error }}">
+                                                    <i class="fa-solid fa-circle-exclamation me-1"></i> Failed: {{ action.error }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4 small">
+                                        No actions executed for this playbook.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white fw-bold d-flex align-items-center justify-content-between">
+                <span><i class="fa-solid fa-code me-1"></i> Raw Wazuh Alert</span>
+                <button class="btn btn-xs btn-outline-light border-0 py-0" onclick="copyRawJson()"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <div class="card-body bg-dark text-light p-0">
+                <pre class="mb-0 p-3 font-monospace" style="font-size: 11px; max-height: 520px; overflow-y: auto;" id="raw-json-block">{{ incident.raw_alert_pretty }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyRawJson() {
+        const pre = document.getElementById("raw-json-block");
+        navigator.clipboard.writeText(pre.innerText).then(() => {
+            alert("Raw JSON alert copied to clipboard!");
+        });
+    }
+</script>
+{% endblock %}

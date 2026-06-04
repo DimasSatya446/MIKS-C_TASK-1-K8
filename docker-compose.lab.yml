@@ -1,67 +1,117 @@
-services:
-  web-target:
-    image: nginx:1.25-alpine
-    container_name: web-target
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    volumes:
-      - ./web/index.html:/usr/share/nginx/html/index.html:ro
-      - ./web/nginx.conf:/etc/nginx/nginx.conf:ro
-      - web_target_logs:/var/log/nginx
-    networks:
-      - wazuh_net
+version: "3.8"
 
-  attacker-simulator:
-    image: alpine:3.20
-    container_name: attacker-simulator
-    command: ["sleep", "infinity"]
-    networks:
-      - wazuh_net
-    depends_on:
-      - web-target
+services:
 
   wazuh-agent-1:
-    build:
-      context: ./agents
+    image: ubuntu:22.04
     container_name: wazuh-agent-1
     hostname: wazuh-agent-1-web
     environment:
-      WAZUH_MANAGER: wazuh.manager
-      AGENT_NAME: wazuh-agent-1-web
-    volumes:
-      - web_target_logs:/var/log/nginx:ro
+      - WAZUH_MANAGER=wazuh.manager
+      - WAZUH_AGENT_NAME=wazuh-agent-1-web
+      - DEBIAN_FRONTEND=noninteractive
+    command: |
+      bash -c "
+        # Wait for manager to be ready
+        echo 'Waiting for Wazuh manager to be ready...'
+        for i in {1..60}; do
+          nc -z -w 5 wazuh.manager 1514 && break
+          echo \"Attempt $$i/60: Manager not ready, retrying...\"
+          sleep 2
+        done
+        
+        apt-get update && apt-get install -y curl gnupg lsb-release netcat
+        curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
+        echo 'deb https://packages.wazuh.com/4.x/apt/ stable main' > /etc/apt/sources.list.d/wazuh.list
+        apt-get update && apt-get install -y wazuh-agent
+        sed -i 's/<hostname>PLACEHOLDER<\/hostname>/<hostname>wazuh-agent-1-web<\/hostname>/g' /var/ossec/etc/ossec.conf
+        sed -i 's/<manager_ip>PLACEHOLDER<\/manager_ip>/<manager_ip>wazuh.manager<\/manager_ip>/g' /var/ossec/etc/ossec.conf
+        /var/ossec/bin/wazuh-control start
+        tail -f /var/ossec/logs/ossec.log
+      "
     networks:
-      - wazuh_net
-    depends_on:
-      - web-target
+      - wazuhlab_net
+    volumes:
+      - ./agents/agent1/ddos.log:/var/log/wazuh-lab/ddos.log
 
   wazuh-agent-2:
-    build:
-      context: ./agents
+    image: ubuntu:22.04
     container_name: wazuh-agent-2
     hostname: wazuh-agent-2-traffic
     environment:
-      WAZUH_MANAGER: wazuh.manager
-      AGENT_NAME: wazuh-agent-2-traffic
+      - WAZUH_MANAGER=wazuh.manager
+      - WAZUH_AGENT_NAME=wazuh-agent-2-traffic
+      - DEBIAN_FRONTEND=noninteractive
+    command: |
+      bash -c "
+        # Wait for manager to be ready
+        echo 'Waiting for Wazuh manager to be ready...'
+        for i in {1..60}; do
+          nc -z -w 5 wazuh.manager 1514 && break
+          echo \"Attempt $$i/60: Manager not ready, retrying...\"
+          sleep 2
+        done
+        
+        apt-get update && apt-get install -y curl gnupg lsb-release netcat
+        curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
+        echo 'deb https://packages.wazuh.com/4.x/apt/ stable main' > /etc/apt/sources.list.d/wazuh.list
+        apt-get update && apt-get install -y wazuh-agent
+        sed -i 's/<hostname>PLACEHOLDER<\/hostname>/<hostname>wazuh-agent-2-traffic<\/hostname>/g' /var/ossec/etc/ossec.conf
+        sed -i 's/<manager_ip>PLACEHOLDER<\/manager_ip>/<manager_ip>wazuh.manager<\/manager_ip>/g' /var/ossec/etc/ossec.conf
+        /var/ossec/bin/wazuh-control start
+        tail -f /var/ossec/logs/ossec.log
+      "
     networks:
-      - wazuh_net
+      - wazuhlab_net
 
   wazuh-agent-3:
-    build:
-      context: ./agents
+    image: ubuntu:22.04
     container_name: wazuh-agent-3
     hostname: wazuh-agent-3-malware
     environment:
-      WAZUH_MANAGER: wazuh.manager
-      AGENT_NAME: wazuh-agent-3-malware
+      - WAZUH_MANAGER=wazuh.manager
+      - WAZUH_AGENT_NAME=wazuh-agent-3-malware
+      - DEBIAN_FRONTEND=noninteractive
+    command: |
+      bash -c "
+        # Wait for manager to be ready
+        echo 'Waiting for Wazuh manager to be ready...'
+        for i in {1..60}; do
+          nc -z -w 5 wazuh.manager 1514 && break
+          echo \"Attempt $$i/60: Manager not ready, retrying...\"
+          sleep 2
+        done
+        
+        apt-get update && apt-get install -y curl gnupg lsb-release netcat
+        curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
+        echo 'deb https://packages.wazuh.com/4.x/apt/ stable main' > /etc/apt/sources.list.d/wazuh.list
+        apt-get update && apt-get install -y wazuh-agent
+        sed -i 's/<hostname>PLACEHOLDER<\/hostname>/<hostname>wazuh-agent-3-malware<\/hostname>/g' /var/ossec/etc/ossec.conf
+        sed -i 's/<manager_ip>PLACEHOLDER<\/manager_ip>/<manager_ip>wazuh.manager<\/manager_ip>/g' /var/ossec/etc/ossec.conf
+        /var/ossec/bin/wazuh-control start
+        tail -f /var/ossec/logs/ossec.log
+      "
     networks:
-      - wazuh_net
+      - wazuhlab_net
 
-volumes:
-  web_target_logs:
+  web-target:
+    image: nginx:alpine
+    container_name: web-target
+    ports:
+      - "80:80"
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - wazuhlab_net
+
+  attacker-simulator:
+    image: alpine:latest
+    container_name: attacker-simulator
+    entrypoint: ["sleep", "infinity"]
+    networks:
+      - wazuhlab_net
 
 networks:
-  wazuh_net:
+  wazuhlab_net:
+    name: wazuhlab_default
     external: true
-    name: ${WAZUH_NETWORK}

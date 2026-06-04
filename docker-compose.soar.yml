@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  soar-redis:
+    image: redis:7-alpine
+    container_name: soar-redis
+    networks:
+      - soar_net
+    restart: unless-stopped
+    mem_limit: 256m
+
+  soar-engine:
+    build: ./soar/engine
+    container_name: soar-engine
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - soar_net
+    environment:
+      - WAZUH_MANAGER_CONTAINER=wazuhlab-wazuh.manager-1
+      - WEB_TARGET_CONTAINER=web-target
+      - REDIS_URL=redis://soar-redis:6379
+      - POLL_INTERVAL=5
+    depends_on:
+      - soar-redis
+    restart: unless-stopped
+    mem_limit: 512m
+
+  soar-dashboard:
+    build: ./soar/dashboard
+    container_name: soar-dashboard
+    networks:
+      - soar_net
+    ports:
+      - "5050:5050"
+    environment:
+      - REDIS_URL=redis://soar-redis:6379
+    depends_on:
+      - soar-redis
+    restart: unless-stopped
+    mem_limit: 256m
+
+networks:
+  soar_net:
+    driver: bridge
