@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-primary text-white">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Total Incidents</h6>
+                    <h2 class="mb-0 fw-bold" id="stat-total">{{ stats.total }}</h2>
+                </div>
+                <i class="fa-solid fa-triangle-exclamation fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-success text-white">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Responded</h6>
+                    <h2 class="mb-0 fw-bold" id="stat-responded">{{ stats.responded }}</h2>
+                </div>
+                <i class="fa-solid fa-shield-check fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-warning text-dark">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-dark-50 text-uppercase mb-1 small fw-bold">Active Threats</h6>
+                    <h2 class="mb-0 fw-bold" id="stat-detected">{{ stats.detected }}</h2>
+                </div>
+                <i class="fa-solid fa-spinner fa-spin fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-danger text-white">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Failed Runs</h6>
+                    <h2 class="mb-0 fw-bold" id="stat-failed">{{ stats.failed }}</h2>
+                </div>
+                <i class="fa-solid fa-circle-xmark fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white fw-bold d-flex align-items-center">
+                <i class="fa-solid fa-ban me-2 text-danger"></i> Blocked IPs (iptables)
+            </div>
+            <div class="card-body p-0" style="max-height: 200px; overflow-y: auto;">
+                <ul class="list-group list-group-flush" id="blocked-ips-list">
+                    {% if blocked_ips %}
+                        {% for ip in blocked_ips %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center text-secondary small">
+                                <span><i class="fa-solid fa-network-wired me-2"></i> {{ ip }}</span>
+                                <span class="badge bg-danger rounded-pill">Blocked</span>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item text-center text-muted py-3 small">No IPs currently blocked.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white fw-bold d-flex align-items-center">
+                <i class="fa-solid fa-network-wired me-2 text-warning"></i> Isolated Agents (Simulated)
+            </div>
+            <div class="card-body p-0" style="max-height: 200px; overflow-y: auto;">
+                <ul class="list-group list-group-flush" id="isolated-agents-list">
+                    {% if isolated_agents %}
+                        {% for agent in isolated_agents %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center text-secondary small">
+                                <span><i class="fa-solid fa-desktop me-2"></i> {{ agent }}</span>
+                                <span class="badge bg-warning text-dark rounded-pill">Isolated</span>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item text-center text-muted py-3 small">No agents isolated.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white fw-bold d-flex align-items-center">
+                <i class="fa-solid fa-box-archive me-2 text-info"></i> Quarantined Files (Simulated)
+            </div>
+            <div class="card-body p-0" style="max-height: 200px; overflow-y: auto;">
+                <ul class="list-group list-group-flush" id="quarantined-files-list">
+                    {% if quarantined_files %}
+                        {% for qfile in quarantined_files %}
+                            <li class="list-group-item text-secondary small">
+                                <div class="d-flex justify-content-between">
+                                    <strong class="text-truncate" style="max-width: 180px;">{{ qfile.file }}</strong>
+                                    <span class="badge bg-info text-white rounded-pill">Quarantined</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted" style="font-size: 10px;">
+                                    <span>Agent: {{ qfile.agent }}</span>
+                                    <span>{{ qfile.timestamp.split('T')[0] }}</span>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item text-center text-muted py-3 small">No files quarantined.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                <h5 class="mb-0 fw-bold text-secondary"><i class="fa-solid fa-list-check me-2"></i> Real-time Incident Feed</h5>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('export_pdf') }}" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-file-pdf me-1"></i> Export PDF</a>
+                    <a href="{{ url_for('export_csv') }}" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-file-csv me-1"></i> Export CSV</a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="incidents-table">
+                        <thead class="table-light text-uppercase font-monospace text-secondary small">
+                            <tr>
+                                <th class="ps-3" style="width: 15%">Time</th>
+                                <th style="width: 12%">Rule ID</th>
+                                <th style="width: 25%">Alert Details</th>
+                                <th style="width: 10%">Severity</th>
+                                <th style="width: 15%">Source IP</th>
+                                <th style="width: 13%">Status</th>
+                                <th class="pe-3 text-center" style="width: 10%">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if incidents %}
+                                {% for inc in incidents %}
+                                    <tr>
+                                        <td class="ps-3 text-muted small">{{ inc.timestamp.split('+')[0] }}</td>
+                                        <td><span class="badge bg-dark font-monospace">{{ inc.rule_id }}</span></td>
+                                        <td>
+                                            <div class="fw-semibold text-dark small text-truncate" style="max-width: 200px;">{{ inc.rule_description }}</div>
+                                            <div class="text-muted small" style="font-size: 11px;"><i class="fa-solid fa-desktop"></i> {{ inc.agent }}</div>
+                                        </td>
+                                        <td>
+                                            {% if inc.severity|int >= 12 %}
+                                                <span class="badge bg-danger">Critical ({{ inc.severity }})</span>
+                                            {% elif inc.severity|int >= 7 %}
+                                                <span class="badge bg-warning text-dark">High ({{ inc.severity }})</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Low ({{ inc.severity }})</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="font-monospace text-secondary small">{{ inc.srcip or 'N/A' }}</td>
+                                        <td>
+                                            {% if inc.status == 'responded' %}
+                                                <span class="badge bg-success"><i class="fa-solid fa-circle-check"></i> Responded</span>
+                                            {% elif inc.status == 'detected' %}
+                                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-spinner fa-spin"></i> Processing</span>
+                                            {% else %}
+                                                <span class="badge bg-danger"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="pe-3 text-center">
+                                            <a href="{{ url_for('incident_detail', id=inc.uuid) }}" class="btn btn-sm btn-primary">
+                                                <i class="fa-solid fa-eye"></i> Detail
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-5">
+                                        <i class="fa-solid fa-receipt fa-3x opacity-20 mb-3 d-block"></i>
+                                        No incidents recorded yet. Alerts will appear here when triggered.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function refreshFeed() {
+        fetch('/api/incidents')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector("#incidents-table tbody");
+                if (data.length === 0) return;
+                
+                let html = "";
+                data.forEach(inc => {
+                    let sevBadge = "";
+                    const sev = parseInt(inc.severity);
+                    if (sev >= 12) {
+                        sevBadge = '<span class="badge bg-danger">Critical ('+sev+')</span>';
+                    } else if (sev >= 7) {
+                        sevBadge = '<span class="badge bg-warning text-dark">High ('+sev+')</span>';
+                    } else {
+                        sevBadge = '<span class="badge bg-secondary">Low ('+sev+')</span>';
+                    }
+
+                    let statusBadge = "";
+                    if (inc.status === "responded") {
+                        statusBadge = '<span class="badge bg-success"><i class="fa-solid fa-circle-check"></i> Responded</span>';
+                    } else if (inc.status === "detected") {
+                        statusBadge = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-spinner fa-spin"></i> Processing</span>';
+                    } else {
+                        statusBadge = '<span class="badge bg-danger"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>';
+                    }
+
+                    let timestampClean = inc.timestamp.split("+")[0];
+
+                    html += `<tr>
+                        <td class="ps-3 text-muted small">${timestampClean}</td>
+                        <td><span class="badge bg-dark font-monospace">${inc.rule_id}</span></td>
+                        <td>
+                            <div class="fw-semibold text-dark small text-truncate" style="max-width: 200px;">${inc.rule_description}</div>
+                            <div class="text-muted small" style="font-size: 11px;"><i class="fa-solid fa-desktop"></i> ${inc.agent}</div>
+                        </td>
+                        <td>${sevBadge}</td>
+                        <td class="font-monospace text-secondary small">${inc.srcip || 'N/A'}</td>
+                        <td>${statusBadge}</td>
+                        <td class="pe-3 text-center">
+                            <a href="/incident/${inc.uuid}" class="btn btn-sm btn-primary">
+                                <i class="fa-solid fa-eye"></i> Detail
+                            </a>
+                        </td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            });
+
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(stats => {
+                document.getElementById("stat-total").innerText = stats.total;
+                document.getElementById("stat-responded").innerText = stats.responded;
+                document.getElementById("stat-detected").innerText = stats.detected;
+                document.getElementById("stat-failed").innerText = stats.failed;
+            });
+            
+        fetch('/api/blocked-ips')
+            .then(response => response.json())
+            .then(ips => {
+                const list = document.getElementById("blocked-ips-list");
+                if (ips.length === 0) {
+                    list.innerHTML = '<li class="list-group-item text-center text-muted py-3 small">No IPs currently blocked.</li>';
+                    return;
+                }
+                let html = "";
+                ips.forEach(ip => {
+                    html += `<li class="list-group-item d-flex justify-content-between align-items-center text-secondary small">
+                        <span><i class="fa-solid fa-network-wired me-2"></i> ${ip}</span>
+                        <span class="badge bg-danger rounded-pill">Blocked</span>
+                    </li>`;
+                });
+                list.innerHTML = html;
+            });
+    }
+
+    setInterval(refreshFeed, 10000);
+</script>
+{% endblock %}
